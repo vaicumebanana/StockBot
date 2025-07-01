@@ -6,89 +6,281 @@
     <title>Treinador de Xadrez com Stockfish</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Roboto+Slab:wght@500&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
         }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
         }
+        
+        h1, h2, h3 {
+            font-family: 'Roboto Slab', serif;
+            color: var(--primary-color);
+        }
+        
         #board {
             width: 500px;
-            margin: 0 auto;
+            margin: 20px auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            overflow: hidden;
         }
+        
         .panel {
             background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: none;
         }
+        
         .btn-group {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
+        
+        .btn {
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-info {
+            background-color: #17a2b8;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+        }
+        
+        .btn-dark {
+            background-color: var(--dark-color);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
         .move-history {
             height: 300px;
             overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 1px solid #e0e0e0;
+            padding: 15px;
             background-color: #f9f9f9;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
         }
+        
+        .move-history div {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .move-history div:hover {
+            background-color: #f0f0f0;
+        }
+        
         .eval-bar {
-            height: 20px;
-            background: linear-gradient(to right, #d9534f, #f0ad4e, #5cb85c);
-            margin-bottom: 15px;
+            height: 25px;
+            background: linear-gradient(to right, var(--danger-color), var(--warning-color), var(--success-color));
+            margin: 20px 0;
             position: relative;
+            border-radius: 12px;
+            overflow: hidden;
         }
+        
         .eval-indicator {
             position: absolute;
-            top: -20px;
-            width: 2px;
-            height: 60px;
-            background-color: black;
+            top: -25px;
+            width: 3px;
+            height: 75px;
+            background-color: var(--dark-color);
+            z-index: 10;
         }
+        
+        .eval-label {
+            position: absolute;
+            top: -30px;
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 12px;
+            color: var(--dark-color);
+        }
+        
         .best-move {
-            background-color: #d4edda;
+            background-color: rgba(39, 174, 96, 0.2);
+            font-weight: bold;
         }
+        
         .hint-move {
-            background-color: #fff3cd;
+            background-color: rgba(243, 156, 18, 0.2);
+            animation: pulse 2s infinite;
         }
+        
+        @keyframes pulse {
+            0% { background-color: rgba(243, 156, 18, 0.2); }
+            50% { background-color: rgba(243, 156, 18, 0.4); }
+            100% { background-color: rgba(243, 156, 18, 0.2); }
+        }
+        
         #lessonContent {
-            min-height: 100px;
+            min-height: 150px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary-color);
         }
+        
         .tab-content {
-            padding: 15px 0;
+            padding: 20px 0;
         }
+        
+        .nav-tabs {
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--dark-color);
+            font-weight: 600;
+            padding: 12px 20px;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--secondary-color);
+            border-bottom: 3px solid var(--secondary-color);
+            background-color: transparent;
+        }
+        
         .slider-container {
-            margin: 15px 0;
+            margin: 25px 0;
         }
+        
         .slider-label {
             display: flex;
             justify-content: space-between;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #666;
         }
+        
+        .form-range::-webkit-slider-thumb {
+            background: var(--secondary-color);
+        }
+        
+        .form-range::-moz-range-thumb {
+            background: var(--secondary-color);
+        }
+        
+        .form-range::-ms-thumb {
+            background: var(--secondary-color);
+        }
+        
         .rating-badge {
             font-size: 0.9em;
-            margin-left: 5px;
+            margin-left: 10px;
+            padding: 8px 12px;
+            background-color: var(--secondary-color);
+        }
+        
+        .status-indicator {
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        
+        .status-playing {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: var(--secondary-color);
+        }
+        
+        .status-check {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+        }
+        
+        .status-mate {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+        }
+        
+        .status-draw {
+            background-color: rgba(149, 165, 166, 0.2);
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            #board {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .panel {
+                padding: 15px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-center mb-4">Treinador de Xadrez com Stockfish <span class="badge bg-primary rating-badge" id="currentRatingBadge">ELO: 1500</span></h1>
+        <h1 class="text-center mb-4">Treinador de Xadrez com Stockfish <span class="badge rating-badge">ELO: <span id="currentRatingValue">1500</span></span></h1>
         
         <div class="row">
             <div class="col-md-8">
                 <div class="panel">
-                    <div id="board"></div>
+                    <div id="board" style="width: 500px"></div>
                     <div class="eval-bar">
                         <div class="eval-indicator" id="evalIndicator"></div>
+                        <div class="eval-label" style="left: 10%">-10</div>
+                        <div class="eval-label" style="left: 50%">0</div>
+                        <div class="eval-label" style="left: 90%">+10</div>
                     </div>
                     
                     <div class="slider-container">
-                        <label for="depthSlider" class="form-label">Profundidade da análise (Depth): <span id="depthValue">15</span></label>
+                        <label for="depthSlider" class="form-label">Profundidade da análise: <strong><span id="depthValue">15</span></strong></label>
                         <input type="range" class="form-range" min="1" max="25" value="15" id="depthSlider">
                         <div class="slider-label">
                             <span>Rápido (1)</span>
@@ -97,7 +289,7 @@
                     </div>
                     
                     <div class="slider-container">
-                        <label for="ratingSlider" class="form-label">Força do oponente (ELO): <span id="ratingValue">1500</span></label>
+                        <label for="ratingSlider" class="form-label">Força do oponente: <strong><span id="ratingValue">1500</span> ELO</strong></label>
                         <input type="range" class="form-range" min="100" max="3500" value="1500" id="ratingSlider">
                         <div class="slider-label">
                             <span>Iniciante (100)</span>
@@ -105,12 +297,12 @@
                         </div>
                     </div>
                     
-                    <div class="btn-group d-flex flex-wrap">
-                        <button id="newGameBtn" class="btn btn-primary m-1">Novo Jogo</button>
-                        <button id="hintBtn" class="btn btn-info m-1">Dica</button>
-                        <button id="analyzeBtn" class="btn btn-warning m-1">Analisar</button>
-                        <button id="undoBtn" class="btn btn-secondary m-1">Desfazer</button>
-                        <button id="flipBoardBtn" class="btn btn-dark m-1">Girar Tabuleiro</button>
+                    <div class="btn-group">
+                        <button id="newGameBtn" class="btn btn-primary">Novo Jogo</button>
+                        <button id="hintBtn" class="btn btn-info">Dica</button>
+                        <button id="analyzeBtn" class="btn btn-warning">Analisar</button>
+                        <button id="undoBtn" class="btn btn-secondary">Desfazer</button>
+                        <button id="flipBoardBtn" class="btn btn-dark">Girar Tabuleiro</button>
                     </div>
                 </div>
             </div>
@@ -131,19 +323,17 @@
                     <div class="tab-content" id="myTabContent">
                         <div class="tab-pane fade show active" id="moves" role="tabpanel">
                             <div class="move-history" id="moveHistory"></div>
-                            <div class="mt-2">
-                                <strong>Status:</strong> <span id="gameStatus">Pronto para jogar</span>
-                            </div>
+                            <div class="status-indicator status-playing" id="gameStatus">Pronto para jogar</div>
                         </div>
                         <div class="tab-pane fade" id="analysis" role="tabpanel">
-                            <div id="engineAnalysis"></div>
-                            <div id="evalScore" class="mt-2"></div>
+                            <div id="engineAnalysis">Clique em "Analisar" para ver a avaliação da posição atual</div>
+                            <div id="evalScore" class="mt-3"></div>
                         </div>
                         <div class="tab-pane fade" id="lessons" role="tabpanel">
                             <div id="lessonContent">
                                 <p>Comece a jogar ou peça uma dica para receber lições personalizadas baseadas no seu jogo.</p>
                             </div>
-                            <button id="showLessonBtn" class="btn btn-success mt-2">Obter Lição</button>
+                            <button id="showLessonBtn" class="btn btn-success mt-3 w-100">Obter Lição</button>
                         </div>
                     </div>
                 </div>
@@ -162,9 +352,13 @@
         const board = Chessboard('board', {
             position: 'start',
             draggable: true,
+            moveSpeed: 'fast',
+            snapbackSpeed: 100,
+            snapSpeed: 50,
             onDragStart: onDragStart,
             onDrop: onDrop,
-            onSnapEnd: onSnapEnd
+            onSnapEnd: onSnapEnd,
+            pieceTheme: 'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/{piece}.png'
         });
         
         // Inicializa Stockfish
@@ -195,7 +389,15 @@
                 if (cpIndex !== -1) {
                     currentEval = parseInt(parts[cpIndex + 1]) / 100;
                     updateEvalBar(currentEval);
-                    document.getElementById('evalScore').textContent = `Avaliação: ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}`;
+                    document.getElementById('evalScore').innerHTML = `
+                        <div class="alert ${currentEval > 1 ? 'alert-success' : currentEval < -1 ? 'alert-danger' : 'alert-warning'}">
+                            <strong>Avaliação:</strong> ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}
+                            ${currentEval > 3 ? '(Vantagem decisiva)' : 
+                              currentEval > 1 ? '(Vantagem clara)' : 
+                              currentEval < -3 ? '(Desvantagem decisiva)' : 
+                              currentEval < -1 ? '(Desvantagem clara)' : '(Posição equilibrada)'}
+                        </div>
+                    `;
                 }
                 
                 // Analisa melhor jogada
@@ -203,12 +405,26 @@
                     const pvIndex = parts.indexOf('pv');
                     const bestLine = parts.slice(pvIndex + 1).join(' ');
                     document.getElementById('engineAnalysis').innerHTML = `
-                        <strong>Melhor linha:</strong> ${formatMoves(bestLine)}<br>
-                        <strong>Avaliação:</strong> ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}
+                        <div class="alert alert-primary">
+                            <h5>Análise da Posição</h5>
+                            <p><strong>Melhor linha:</strong> ${formatMoves(bestLine)}</p>
+                            <p><strong>Avaliação:</strong> ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}</p>
+                            ${getPositionDescription(currentEval)}
+                        </div>
                     `;
                 }
             }
         };
+        
+        function getPositionDescription(eval) {
+            if (eval > 3) return `<p>Você tem uma vantagem decisiva. Procure maneiras de converter essa vantagem em vitória.</p>`;
+            if (eval > 1.5) return `<p>Você tem uma vantagem clara. Tente aumentar sua pressão sobre o oponente.</p>`;
+            if (eval > 0.5) return `<p>Você tem uma pequena vantagem. Mantenha a iniciativa.</p>`;
+            if (eval > -0.5) return `<p>A posição está equilibrada. Ambos os lados têm chances iguais.</p>`;
+            if (eval > -1.5) return `<p>Você está em pequena desvantagem. Jogue com cuidado.</p>`;
+            if (eval > -3) return `<p>Você está em desvantagem clara. Tente defender e complicar o jogo.</p>`;
+            return `<p>Você está em desvantagem decisiva. O oponente tem grande vantagem.</p>`;
+        }
         
         // Inicializa motor
         stockfish.postMessage('uci');
@@ -228,14 +444,15 @@
             game.reset();
             board.position(game.fen());
             updateMoveHistory();
-            updateStatus('Novo jogo iniciado. Brancas jogam.');
-            document.getElementById('engineAnalysis').innerHTML = '';
+            updateStatus('Novo jogo iniciado. Brancas jogam.', 'playing');
+            document.getElementById('engineAnalysis').innerHTML = 'Clique em "Analisar" para ver a avaliação da posição atual';
             document.getElementById('lessonContent').innerHTML = 
                 '<p>Comece a jogar ou peça uma dica para receber lições personalizadas baseadas no seu jogo.</p>';
             analyzing = false;
+            document.getElementById('analyzeBtn').textContent = 'Analisar';
             
             if (Math.random() > 0.5) {
-                updateStatus('Motor começa (Pretas)');
+                updateStatus('Motor começa (Pretas)', 'playing');
                 setTimeout(() => {
                     stockfish.postMessage(`position fen ${game.fen()}`);
                     stockfish.postMessage(`go depth ${currentDepth}`);
@@ -268,14 +485,14 @@
             
             // Verifica status do jogo
             if (game.is_checkmate()) {
-                updateStatus(`Xeque-mate! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} vencem.`);
+                updateStatus(`Xeque-mate! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} vencem.`, 'mate');
             } else if (game.is_draw()) {
-                updateStatus('Empate!');
+                updateStatus('Empate!', 'draw');
             } else {
                 if (game.is_check()) {
-                    updateStatus(`Xeque! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                    updateStatus(`Xeque! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`, 'check');
                 } else {
-                    updateStatus(`${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                    updateStatus(`${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`, 'playing');
                 }
                 
                 // Motor faz uma jogada
@@ -298,14 +515,14 @@
             updateMoveHistory();
             
             if (game.is_checkmate()) {
-                updateStatus(`Xeque-mate! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} vencem.`);
+                updateStatus(`Xeque-mate! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} vencem.`, 'mate');
             } else if (game.is_draw()) {
-                updateStatus('Empate!');
+                updateStatus('Empate!', 'draw');
             } else {
                 if (game.is_check()) {
-                    updateStatus(`Xeque! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                    updateStatus(`Xeque! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`, 'check');
                 } else {
-                    updateStatus(`${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                    updateStatus(`${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`, 'playing');
                 }
             }
         }
@@ -320,10 +537,30 @@
                 html += `<div>${moveNumber}. ${whiteMove} ${blackMove}</div>`;
             }
             document.getElementById('moveHistory').innerHTML = html;
+            document.getElementById('moveHistory').scrollTop = document.getElementById('moveHistory').scrollHeight;
         }
         
-        function updateStatus(status) {
-            document.getElementById('gameStatus').textContent = status;
+        function updateStatus(status, type = 'playing') {
+            const statusElement = document.getElementById('gameStatus');
+            statusElement.textContent = status;
+            
+            // Remove todas as classes de status
+            statusElement.className = 'status-indicator';
+            
+            // Adiciona a classe apropriada
+            switch(type) {
+                case 'check':
+                    statusElement.classList.add('status-check');
+                    break;
+                case 'mate':
+                    statusElement.classList.add('status-mate');
+                    break;
+                case 'draw':
+                    statusElement.classList.add('status-draw');
+                    break;
+                default:
+                    statusElement.classList.add('status-playing');
+            }
         }
         
         function updateEvalBar(eval) {
@@ -334,7 +571,10 @@
         }
         
         function showHint() {
-            if (game.game_over()) return;
+            if (game.game_over()) {
+                alert('O jogo já terminou! Comece um novo jogo.');
+                return;
+            }
             
             stockfish.postMessage(`position fen ${game.fen()}`);
             stockfish.postMessage(`go depth ${currentDepth}`);
@@ -379,7 +619,7 @@
             const to = move.substring(2, 4);
             const piece = game.get(from).type;
             
-            let explanation = `Sugestão: Mova ${getPieceName(piece)} de ${from} para ${to}.`;
+            let explanation = `Sugestão: Mova ${getPieceName(piece)} de ${from.toUpperCase()} para ${to.toUpperCase()}.`;
             
             // Verifica se é captura
             if (game.get(to)) {
@@ -396,7 +636,9 @@
             document.getElementById('lessonContent').innerHTML = `
                 <h5>Dica do Motor</h5>
                 <p>${explanation}</p>
-                <p>Jogar esta movimentação é avaliado como ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}.</p>
+                <div class="alert ${currentEval > 1 ? 'alert-success' : currentEval < -1 ? 'alert-danger' : 'alert-warning'}">
+                    <strong>Avaliação desta jogada:</strong> ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}
+                </div>
             `;
         }
         
@@ -415,14 +657,15 @@
         function toggleAnalysis() {
             analyzing = !analyzing;
             document.getElementById('analyzeBtn').textContent = analyzing ? 'Parar Análise' : 'Analisar';
+            document.getElementById('analyzeBtn').className = analyzing ? 'btn btn-danger' : 'btn btn-warning';
             
             if (analyzing) {
                 stockfish.postMessage(`position fen ${game.fen()}`);
                 stockfish.postMessage(`go depth ${currentDepth}`);
-                updateStatus('Analisando posição...');
+                updateStatus('Analisando posição...', 'playing');
             } else {
                 stockfish.postMessage('stop');
-                updateStatus('Análise parada');
+                updateStatus('Análise parada', 'playing');
             }
         }
         
@@ -432,11 +675,16 @@
                 return;
             }
             
+            if (game.history().length === 0) {
+                alert('Não há jogadas para desfazer!');
+                return;
+            }
+            
             game.undo();
             if (game.history().length > 0) game.undo(); // Desfaz duas jogadas (do jogador e do motor)
             board.position(game.fen());
             updateMoveHistory();
-            updateStatus('Jogada desfeita. Sua vez novamente.');
+            updateStatus('Jogada desfeita. Sua vez novamente.', 'playing');
         }
         
         function flipBoard() {
@@ -451,7 +699,7 @@
         function updateRating() {
             currentRating = parseInt(document.getElementById('ratingSlider').value);
             document.getElementById('ratingValue').textContent = currentRating;
-            document.getElementById('currentRatingBadge').textContent = `ELO: ${currentRating}`;
+            document.getElementById('currentRatingValue').textContent = currentRating;
             setEngineRating();
         }
         
@@ -493,38 +741,39 @@
         function showLesson() {
             if (game.history().length === 0) {
                 document.getElementById('lessonContent').innerHTML = 
-                    '<p>Jogue algumas movimentações primeiro para receber uma lição personalizada.</p>';
+                    '<div class="alert alert-info">Jogue algumas movimentações primeiro para receber uma lição personalizada.</div>';
                 return;
             }
             
             const lessonTopics = [
-                "Desenvolvimento de peças: No início do jogo, tente desenvolver seus cavalos e bispos para casas ativas.",
-                "Controle do centro: As casas centrais (e4, e5, d4, d5) são importantes para controlar o tabuleiro.",
-                "Segurança do rei: Considere rocar seu rei para protegê-lo.",
-                "Estrutura de peões: Evite criar peões dobrados ou isolados sem necessidade.",
-                "Coordenação de peças: Certifique-se de que suas peças trabalhem juntas em um plano comum.",
-                "Táticas básicas: Procure por garfos, espetos e descobertas em cada jogada.",
-                "Planejamento: Tente identificar os pontos fracos e fortes de ambas as posições."
+                "Desenvolvimento de peças: No início do jogo, priorize desenvolver seus cavalos e bispos para casas ativas. Peças desenvolvidas dão mais opções e controle sobre o jogo.",
+                "Controle do centro: As casas centrais (e4, e5, d4, d5) são estratégicas porque permitem maior mobilidade para suas peças. Tente controlá-las com peões e peças.",
+                "Segurança do rei: O roque é uma das maneiras mais eficientes de proteger seu rei. Considere rocar cedo, especialmente se o centro do tabuleiro estiver aberto.",
+                "Estrutura de peões: Peões fortes formam a base de uma boa posição. Evite peões dobrados (na mesma coluna) ou isolados (sem peões vizinhos) sem uma boa razão.",
+                "Coordenação de peças: Suas peças devem trabalhar juntas em um plano comum. Evite ter peças isoladas ou sem comunicação com as outras.",
+                "Táticas básicas: Procure por padrões táticos como garfos (ataque duplo), espetos (ataque a uma peça importante por trás) e descobertas (mover uma peça para revelar um ataque) em cada jogada.",
+                "Planejamento estratégico: Analise a posição para identificar pontos fracos (peças desprotegidas, peões fracos) e fortes (peças ativas, controle de casas importantes) de ambos os lados."
             ];
             
             // Analisa a posição atual para lição personalizada
-            let lesson = "<h5>Lição Personalizada</h5>";
+            let lesson = `<h5>Lição Personalizada</h5>`;
             
             // Lição baseada no número de jogadas
             if (game.history().length < 8) {
-                lesson += `<p><strong>Abertura:</strong> ${lessonTopics[0]} ${lessonTopics[1]}</p>`;
+                lesson += `<div class="alert alert-info"><strong>Abertura:</strong> ${lessonTopics[0]}</div>`;
+                lesson += `<div class="alert alert-info mt-2"><strong>Dica:</strong> ${lessonTopics[1]}</div>`;
             } else if (!game.history().some(move => move.includes('O-O') || move.includes('O-O-O'))) {
-                lesson += `<p><strong>Meio-jogo:</strong> ${lessonTopics[2]}</p>`;
+                lesson += `<div class="alert alert-warning"><strong>Meio-jogo:</strong> ${lessonTopics[2]}</div>`;
             } else {
                 const randomTopic = lessonTopics[Math.floor(Math.random() * (lessonTopics.length - 2)) + 3];
-                lesson += `<p><strong>Meio-jogo:</strong> ${randomTopic}</p>`;
+                lesson += `<div class="alert alert-primary"><strong>Meio-jogo:</strong> ${randomTopic}</div>`;
             }
             
             // Adiciona análise específica se disponível
             if (currentEval < -1.5) {
-                lesson += `<p>Sua posição está desvantajosa (avaliação: ${currentEval.toFixed(2)}). Considere defender suas peças mais vulneráveis.</p>`;
+                lesson += `<div class="alert alert-danger mt-2"><strong>Situação atual:</strong> Sua posição está desvantajosa (avaliação: ${currentEval.toFixed(2)}). Considere defender suas peças mais vulneráveis e procurar contra-jogadas.</div>`;
             } else if (currentEval > 1.5) {
-                lesson += `<p>Sua posição está vantajosa (avaliação: +${currentEval.toFixed(2)}). Procure maneiras de aumentar sua vantagem.</p>`;
+                lesson += `<div class="alert alert-success mt-2"><strong>Situação atual:</strong> Sua posição está vantajosa (avaliação: +${currentEval.toFixed(2)}). Procure maneiras de aumentar sua vantagem ou converter em ganho material.</div>`;
             }
             
             document.getElementById('lessonContent').innerHTML = lesson;
@@ -532,6 +781,8 @@
         
         // Inicia um novo jogo por padrão
         newGame();
+        updateDepth();
+        updateRating();
     </script>
 </body>
 </html>
