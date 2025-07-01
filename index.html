@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treinador de Xadrez com Stockfish</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        #board {
+            width: 500px;
+            margin: 0 auto;
+        }
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-group {
+            margin-bottom: 10px;
+        }
+        .move-history {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        .eval-bar {
+            height: 20px;
+            background: linear-gradient(to right, #d9534f, #f0ad4e, #5cb85c);
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .eval-indicator {
+            position: absolute;
+            top: -20px;
+            width: 2px;
+            height: 60px;
+            background-color: black;
+        }
+        .best-move {
+            background-color: #d4edda;
+        }
+        .hint-move {
+            background-color: #fff3cd;
+        }
+        #lessonContent {
+            min-height: 100px;
+        }
+        .tab-content {
+            padding: 15px 0;
+        }
+        .slider-container {
+            margin: 15px 0;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        .rating-badge {
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Treinador de Xadrez com Stockfish <span class="badge bg-primary rating-badge" id="currentRatingBadge">ELO: 1500</span></h1>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="panel">
+                    <div id="board"></div>
+                    <div class="eval-bar">
+                        <div class="eval-indicator" id="evalIndicator"></div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="depthSlider" class="form-label">Profundidade da análise (Depth): <span id="depthValue">15</span></label>
+                        <input type="range" class="form-range" min="1" max="25" value="15" id="depthSlider">
+                        <div class="slider-label">
+                            <span>Rápido (1)</span>
+                            <span>Profundo (25)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="ratingSlider" class="form-label">Força do oponente (ELO): <span id="ratingValue">1500</span></label>
+                        <input type="range" class="form-range" min="100" max="3500" value="1500" id="ratingSlider">
+                        <div class="slider-label">
+                            <span>Iniciante (100)</span>
+                            <span>Super GM (3500)</span>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-group d-flex flex-wrap">
+                        <button id="newGameBtn" class="btn btn-primary m-1">Novo Jogo</button>
+                        <button id="hintBtn" class="btn btn-info m-1">Dica</button>
+                        <button id="analyzeBtn" class="btn btn-warning m-1">Analisar</button>
+                        <button id="undoBtn" class="btn btn-secondary m-1">Desfazer</button>
+                        <button id="flipBoardBtn" class="btn btn-dark m-1">Girar Tabuleiro</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="panel">
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="moves-tab" data-bs-toggle="tab" data-bs-target="#moves" type="button">Jogadas</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">Análise</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="lessons-tab" data-bs-toggle="tab" data-bs-target="#lessons" type="button">Lições</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="myTabContent">
+                        <div class="tab-pane fade show active" id="moves" role="tabpanel">
+                            <div class="move-history" id="moveHistory"></div>
+                            <div class="mt-2">
+                                <strong>Status:</strong> <span id="gameStatus">Pronto para jogar</span>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="analysis" role="tabpanel">
+                            <div id="engineAnalysis"></div>
+                            <div id="evalScore" class="mt-2"></div>
+                        </div>
+                        <div class="tab-pane fade" id="lessons" role="tabpanel">
+                            <div id="lessonContent">
+                                <p>Comece a jogar ou peça uma dica para receber lições personalizadas baseadas no seu jogo.</p>
+                            </div>
+                            <button id="showLessonBtn" class="btn btn-success mt-2">Obter Lição</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stockfish@latest/stockfish.min.js"></script>
+    
+    <script>
+        // Inicializa componentes do xadrez
+        const game = new Chess();
+        const board = Chessboard('board', {
+            position: 'start',
+            draggable: true,
+            onDragStart: onDragStart,
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        });
+        
+        // Inicializa Stockfish
+        const stockfish = new Worker('https://cdn.jsdelivr.net/npm/stockfish@latest/stockfish.js');
+        let engineReady = false;
+        let analyzing = false;
+        let currentEval = 0;
+        let currentDepth = 15;
+        let currentRating = 1500;
+        
+        stockfish.onmessage = function(event) {
+            const message = event.data;
+            console.log("Engine:", message);
+            
+            if (message === 'uciok') {
+                engineReady = true;
+                setEngineRating();
+                updateStatus('Motor pronto');
+            } else if (message.startsWith('bestmove')) {
+                const bestMove = message.split(' ')[1];
+                if (bestMove && !analyzing) {
+                    setTimeout(() => makeEngineMove(bestMove), 500);
+                }
+            } else if (message.startsWith('info depth') && message.includes('score cp')) {
+                // Analisa informações de avaliação
+                const parts = message.split(' ');
+                const cpIndex = parts.indexOf('cp');
+                if (cpIndex !== -1) {
+                    currentEval = parseInt(parts[cpIndex + 1]) / 100;
+                    updateEvalBar(currentEval);
+                    document.getElementById('evalScore').textContent = `Avaliação: ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}`;
+                }
+                
+                // Analisa melhor jogada
+                if (analyzing && message.includes('pv')) {
+                    const pvIndex = parts.indexOf('pv');
+                    const bestLine = parts.slice(pvIndex + 1).join(' ');
+                    document.getElementById('engineAnalysis').innerHTML = `
+                        <strong>Melhor linha:</strong> ${formatMoves(bestLine)}<br>
+                        <strong>Avaliação:</strong> ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}
+                    `;
+                }
+            }
+        };
+        
+        // Inicializa motor
+        stockfish.postMessage('uci');
+        stockfish.postMessage('isready');
+        
+        // Eventos da UI
+        document.getElementById('newGameBtn').addEventListener('click', newGame);
+        document.getElementById('hintBtn').addEventListener('click', showHint);
+        document.getElementById('analyzeBtn').addEventListener('click', toggleAnalysis);
+        document.getElementById('undoBtn').addEventListener('click', undoMove);
+        document.getElementById('flipBoardBtn').addEventListener('click', flipBoard);
+        document.getElementById('depthSlider').addEventListener('input', updateDepth);
+        document.getElementById('ratingSlider').addEventListener('input', updateRating);
+        document.getElementById('showLessonBtn').addEventListener('click', showLesson);
+        
+        function newGame() {
+            game.reset();
+            board.position(game.fen());
+            updateMoveHistory();
+            updateStatus('Novo jogo iniciado. Brancas jogam.');
+            document.getElementById('engineAnalysis').innerHTML = '';
+            document.getElementById('lessonContent').innerHTML = 
+                '<p>Comece a jogar ou peça uma dica para receber lições personalizadas baseadas no seu jogo.</p>';
+            analyzing = false;
+            
+            if (Math.random() > 0.5) {
+                updateStatus('Motor começa (Pretas)');
+                setTimeout(() => {
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage(`go depth ${currentDepth}`);
+                }, 500);
+            }
+        }
+        
+        function onDragStart(source, piece, position, orientation) {
+            if (game.game_over() || 
+                (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
+                analyzing) {
+                return false;
+            }
+        }
+        
+        function onDrop(source, target) {
+            // Tenta fazer a jogada
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // Sempre promove a rainha por simplicidade
+            });
+            
+            // Jogada ilegal
+            if (move === null) return 'snapback';
+            
+            updateMoveHistory();
+            board.position(game.fen());
+            
+            // Verifica status do jogo
+            if (game.is_checkmate()) {
+                updateStatus(`Xeque-mate! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} vencem.`);
+            } else if (game.is_draw()) {
+                updateStatus('Empate!');
+            } else {
+                if (game.is_check()) {
+                    updateStatus(`Xeque! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                } else {
+                    updateStatus(`${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                }
+                
+                // Motor faz uma jogada
+                if (!analyzing) {
+                    stockfish.postMessage(`position fen ${game.fen()}`);
+                    stockfish.postMessage(`go depth ${currentDepth}`);
+                }
+            }
+        }
+        
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+        
+        function makeEngineMove(move) {
+            if (game.game_over() || analyzing) return;
+            
+            game.move(move);
+            board.position(game.fen());
+            updateMoveHistory();
+            
+            if (game.is_checkmate()) {
+                updateStatus(`Xeque-mate! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} vencem.`);
+            } else if (game.is_draw()) {
+                updateStatus('Empate!');
+            } else {
+                if (game.is_check()) {
+                    updateStatus(`Xeque! ${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                } else {
+                    updateStatus(`${game.turn() === 'w' ? 'Pretas' : 'Brancas'} jogam.`);
+                }
+            }
+        }
+        
+        function updateMoveHistory() {
+            const history = game.history();
+            let html = '';
+            for (let i = 0; i < history.length; i += 2) {
+                const moveNumber = (i / 2) + 1;
+                const whiteMove = history[i];
+                const blackMove = history[i + 1] ? history[i + 1] : '';
+                html += `<div>${moveNumber}. ${whiteMove} ${blackMove}</div>`;
+            }
+            document.getElementById('moveHistory').innerHTML = html;
+        }
+        
+        function updateStatus(status) {
+            document.getElementById('gameStatus').textContent = status;
+        }
+        
+        function updateEvalBar(eval) {
+            // Limita a avaliação entre -10 e +10 para visualização
+            const limitedEval = Math.max(-10, Math.min(10, eval));
+            const percentage = (limitedEval + 10) * 5;
+            document.getElementById('evalIndicator').style.left = `${percentage}%`;
+        }
+        
+        function showHint() {
+            if (game.game_over()) return;
+            
+            stockfish.postMessage(`position fen ${game.fen()}`);
+            stockfish.postMessage(`go depth ${currentDepth}`);
+            
+            // Temporariamente mostra a melhor jogada
+            const hintTimeout = setTimeout(() => {
+                stockfish.postMessage('stop');
+            }, 1000);
+            
+            const originalCallback = stockfish.onmessage;
+            stockfish.onmessage = function(event) {
+                const message = event.data;
+                if (message.startsWith('bestmove')) {
+                    clearTimeout(hintTimeout);
+                    const bestMove = message.split(' ')[1];
+                    highlightMove(bestMove);
+                    stockfish.onmessage = originalCallback;
+                    
+                    // Explica a jogada
+                    explainMove(bestMove);
+                }
+            };
+        }
+        
+        function highlightMove(move) {
+            // Remove highlights anteriores
+            document.querySelectorAll('.hint-move').forEach(el => {
+                el.classList.remove('hint-move');
+            });
+            
+            // Adiciona highlight à jogada sugerida
+            const moveElement = Array.from(document.querySelectorAll('#moveHistory div'))
+                .find(el => el.textContent.includes(move));
+            
+            if (moveElement) {
+                moveElement.classList.add('hint-move');
+            }
+        }
+        
+        function explainMove(move) {
+            const from = move.substring(0, 2);
+            const to = move.substring(2, 4);
+            const piece = game.get(from).type;
+            
+            let explanation = `Sugestão: Mova ${getPieceName(piece)} de ${from} para ${to}.`;
+            
+            // Verifica se é captura
+            if (game.get(to)) {
+                explanation += ` Isso captura o ${getPieceName(game.get(to).type)} do oponente.`;
+            }
+            
+            // Verifica xeque
+            const tempGame = new Chess(game.fen());
+            tempGame.move(move);
+            if (tempGame.is_check()) {
+                explanation += " Isso dá xeque no rei adversário.";
+            }
+            
+            document.getElementById('lessonContent').innerHTML = `
+                <h5>Dica do Motor</h5>
+                <p>${explanation}</p>
+                <p>Jogar esta movimentação é avaliado como ${currentEval > 0 ? '+' : ''}${currentEval.toFixed(2)}.</p>
+            `;
+        }
+        
+        function getPieceName(piece) {
+            const names = {
+                'p': 'peão',
+                'n': 'cavalo',
+                'b': 'bispo',
+                'r': 'torre',
+                'q': 'rainha',
+                'k': 'rei'
+            };
+            return names[piece] || piece;
+        }
+        
+        function toggleAnalysis() {
+            analyzing = !analyzing;
+            document.getElementById('analyzeBtn').textContent = analyzing ? 'Parar Análise' : 'Analisar';
+            
+            if (analyzing) {
+                stockfish.postMessage(`position fen ${game.fen()}`);
+                stockfish.postMessage(`go depth ${currentDepth}`);
+                updateStatus('Analisando posição...');
+            } else {
+                stockfish.postMessage('stop');
+                updateStatus('Análise parada');
+            }
+        }
+        
+        function undoMove() {
+            if (analyzing) {
+                alert('Pare a análise primeiro para desfazer jogadas.');
+                return;
+            }
+            
+            game.undo();
+            if (game.history().length > 0) game.undo(); // Desfaz duas jogadas (do jogador e do motor)
+            board.position(game.fen());
+            updateMoveHistory();
+            updateStatus('Jogada desfeita. Sua vez novamente.');
+        }
+        
+        function flipBoard() {
+            board.flip();
+        }
+        
+        function updateDepth() {
+            currentDepth = parseInt(document.getElementById('depthSlider').value);
+            document.getElementById('depthValue').textContent = currentDepth;
+        }
+        
+        function updateRating() {
+            currentRating = parseInt(document.getElementById('ratingSlider').value);
+            document.getElementById('ratingValue').textContent = currentRating;
+            document.getElementById('currentRatingBadge').textContent = `ELO: ${currentRating}`;
+            setEngineRating();
+        }
+        
+        function setEngineRating() {
+            if (!engineReady) return;
+            
+            // Converte ELO para parâmetros do Stockfish (Skill Level e UCI_LimitStrength)
+            if (currentRating >= 2500) {
+                // Máxima força para ratings altos
+                stockfish.postMessage('setoption name Skill Level value 20');
+                stockfish.postMessage('setoption name UCI_LimitStrength value false');
+            } else {
+                // Usa força limitada para ratings mais baixos
+                const skillLevel = Math.max(0, Math.min(20, Math.floor((currentRating - 800) / 100)));
+                stockfish.postMessage(`setoption name Skill Level value ${skillLevel}`);
+                stockfish.postMessage('setoption name UCI_LimitStrength value true');
+                stockfish.postMessage(`setoption name UCI_Elo value ${currentRating}`);
+            }
+        }
+        
+        function formatMoves(moveString) {
+            // Formata uma sequência de movimentos para melhor legibilidade
+            const moves = moveString.split(' ');
+            let result = '';
+            let moveCount = 1;
+            
+            for (let i = 0; i < moves.length; i++) {
+                if (i % 2 === 0) {
+                    result += `${moveCount}. ${moves[i]} `;
+                    moveCount++;
+                } else {
+                    result += `${moves[i]} `;
+                }
+            }
+            
+            return result.trim();
+        }
+        
+        function showLesson() {
+            if (game.history().length === 0) {
+                document.getElementById('lessonContent').innerHTML = 
+                    '<p>Jogue algumas movimentações primeiro para receber uma lição personalizada.</p>';
+                return;
+            }
+            
+            const lessonTopics = [
+                "Desenvolvimento de peças: No início do jogo, tente desenvolver seus cavalos e bispos para casas ativas.",
+                "Controle do centro: As casas centrais (e4, e5, d4, d5) são importantes para controlar o tabuleiro.",
+                "Segurança do rei: Considere rocar seu rei para protegê-lo.",
+                "Estrutura de peões: Evite criar peões dobrados ou isolados sem necessidade.",
+                "Coordenação de peças: Certifique-se de que suas peças trabalhem juntas em um plano comum.",
+                "Táticas básicas: Procure por garfos, espetos e descobertas em cada jogada.",
+                "Planejamento: Tente identificar os pontos fracos e fortes de ambas as posições."
+            ];
+            
+            // Analisa a posição atual para lição personalizada
+            let lesson = "<h5>Lição Personalizada</h5>";
+            
+            // Lição baseada no número de jogadas
+            if (game.history().length < 8) {
+                lesson += `<p><strong>Abertura:</strong> ${lessonTopics[0]} ${lessonTopics[1]}</p>`;
+            } else if (!game.history().some(move => move.includes('O-O') || move.includes('O-O-O'))) {
+                lesson += `<p><strong>Meio-jogo:</strong> ${lessonTopics[2]}</p>`;
+            } else {
+                const randomTopic = lessonTopics[Math.floor(Math.random() * (lessonTopics.length - 2)) + 3];
+                lesson += `<p><strong>Meio-jogo:</strong> ${randomTopic}</p>`;
+            }
+            
+            // Adiciona análise específica se disponível
+            if (currentEval < -1.5) {
+                lesson += `<p>Sua posição está desvantajosa (avaliação: ${currentEval.toFixed(2)}). Considere defender suas peças mais vulneráveis.</p>`;
+            } else if (currentEval > 1.5) {
+                lesson += `<p>Sua posição está vantajosa (avaliação: +${currentEval.toFixed(2)}). Procure maneiras de aumentar sua vantagem.</p>`;
+            }
+            
+            document.getElementById('lessonContent').innerHTML = lesson;
+        }
+        
+        // Inicia um novo jogo por padrão
+        newGame();
+    </script>
+</body>
+</html>
